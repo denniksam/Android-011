@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Android-011</string>
-    <string name="button_name">ADD !</string>
+
+    <!-- Main Activity -->
+    <string name="title_text">Android basics</string>
+    <string name="button_calc_text">Calculator</string>
 </resources>

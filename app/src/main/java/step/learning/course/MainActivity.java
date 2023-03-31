@@ -14,17 +14,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);   // inflate - InitializeComponent
 
-        Button button = findViewById( R.id.button ) ;
-        button.setOnClickListener( this::buttonClick ) ;
+        findViewById( R.id.button_calc ).setOnClickListener( this::buttonCalcClick ) ;
     }
 
-    private void buttonClick( View view ) {
-        TextView textHello = findViewById( R.id.text_hello ) ;
-        String txt = textHello.getText().toString() ;
-        txt += "!" ;
-        textHello.setText( txt ) ;
+    private void buttonCalcClick( View view ) {
+
     }
 }
+/*
+    Запуск дополнительных активностей
+    1. Создаем новую активность как ресурс ()
+ */
 /*
 Д.З. Установить и настроить ПО для Андроид-разработки
 В приложение добавить кнопку "DEL !", удаляющую "!" из конца строки (если он есть)
