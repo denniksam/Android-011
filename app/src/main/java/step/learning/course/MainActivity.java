@@ -2,6 +2,7 @@ package step.learning.course;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -18,12 +19,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void buttonCalcClick( View view ) {
-
+        Intent activityIntent = new Intent( MainActivity.this, CalcActivity.class ) ;
+        startActivity( activityIntent ) ;
     }
 }
 /*
     Запуск дополнительных активностей
-    1. Создаем новую активность как ресурс ()
+    1. Создаем новую активность как ресурс (ПКМ - new - Activity - Empty Activity)
+    2. Проверяем регистрацию новой активности в манифесте, добавляем
+        android:parentActivityName=".MainActivity"
+        это укажет иерархию и на активности будет кнопка "назад", возвращающая по иерархии
+    3. см. buttonCalcClick
  */
 /*
 Д.З. Установить и настроить ПО для Андроид-разработки
