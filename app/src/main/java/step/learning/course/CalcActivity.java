@@ -3,10 +3,12 @@ package step.learning.course;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.DecimalFormat;
 
@@ -16,6 +18,7 @@ public class CalcActivity extends AppCompatActivity {
     private TextView tvResult ;
     private String minusSign ;
     private String zeroSymbol ;
+    private boolean needClear ;  // необходимо очистить экран при вводе новой цифры
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,8 +31,7 @@ public class CalcActivity extends AppCompatActivity {
         tvHistory = findViewById( R.id.tv_history ) ;
         tvResult = findViewById( R.id.tv_result ) ;
 
-        tvHistory.setText( "" ) ;
-        displayResult( "" ) ;
+        clearClick( null ) ;
 
         // String[] suffixes = {"one", "two", } ;
         for( int i = 0; i < 10; i++ ) {
@@ -43,8 +45,49 @@ public class CalcActivity extends AppCompatActivity {
         }
         findViewById( R.id.calc_btn_backspace ).setOnClickListener( this::backspaceClick ) ;
         findViewById( R.id.calc_btn_plus_minus ).setOnClickListener( this::plusMinusClick ) ;
+        findViewById( R.id.calc_btn_clear ).setOnClickListener( this::clearClick ) ;
+        findViewById( R.id.calc_btn_ce ).setOnClickListener( this::clearEditClick ) ;
+        findViewById( R.id.calc_btn_square ).setOnClickListener( this::squareClick ) ;
 
     }
+
+    private void squareClick( View view ) {
+        String result = tvResult.getText().toString() ;
+        double arg ;
+        try {
+             arg = Double.parseDouble(
+                    result
+                            .replace( minusSign, "-" )
+                            .replaceAll( zeroSymbol, "0" )
+             ) ;
+        }
+        catch( NumberFormatException | NullPointerException ignored ) {
+            Toast.makeText(                     // Всплывающее сообщение
+                    this,                       // контекст - родительская активность
+                    R.string.calc_error_parse,  // текст либо ресурс
+                    Toast.LENGTH_SHORT )        // длительность (во времени)
+                .show();                        // !! не забывать - запуск тоста
+            return ;
+        }
+        tvHistory.setText( result + "² =" ) ;
+        arg *= arg ;
+        displayResult( arg ) ;
+        needClear = true ;
+        /*
+        Д.З. После вычисления результата операции "квадрат" при нажатии "backspace"
+        должен полностью очищаться экран и история.
+        При начале ввода (после операции) также должна стираться история.
+        Реализовать операцию 1/x (инверсию)
+        */
+    }
+    private void clearClick( View view ) {  // C
+        tvHistory.setText( "" ) ;
+        displayResult( "" ) ;
+    }
+    private void clearEditClick( View view ) {  // CE
+        displayResult( "" ) ;
+    }
+
     private void plusMinusClick( View view ) {
         // изменение знака: если есть "-" перед числом, то убираем его, если нет - добавляем
         String result = tvResult.getText().toString() ;
@@ -71,12 +114,13 @@ public class CalcActivity extends AppCompatActivity {
             return ;
         }
         String digit = ( (Button) view ).getText().toString() ;
-        if( result.equals( "0" ) ) {
+        if( result.equals( zeroSymbol ) || needClear ) {
             result = "" ;
+            needClear = false ;
         }
         result += digit ;
         displayResult( result ) ;
-
+// Ø
     }
 
     private void displayResult( String result ) {
@@ -84,6 +128,17 @@ public class CalcActivity extends AppCompatActivity {
             result = zeroSymbol ;
         }
         tvResult.setText( result ) ;
+    }
+
+    private void displayResult( double arg ) {
+        long argInt = (long) arg ;
+        String result = argInt == arg ? "" + argInt : "" + arg ;
+
+        result = result
+                .replace( "-", minusSign )
+                .replaceAll( "0", zeroSymbol ) ;
+
+        displayResult( result ) ;
     }
 }
 /*
