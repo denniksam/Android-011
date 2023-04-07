@@ -1,10 +1,12 @@
 package step.learning.course;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -19,7 +21,10 @@ public class CalcActivity extends AppCompatActivity {
     private String minusSign ;
     private String zeroSymbol ;
     private boolean needClear ;  // необходимо очистить экран при вводе новой цифры
-
+    /*
+        Д.З. Реализовать сохранение и восстановление (при изменении конфигурации)
+        всех необходимых значений, влияющих на состояние калькулятора
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +56,28 @@ public class CalcActivity extends AppCompatActivity {
 
     }
 
+    // При изменении конфигурации устройства перезапускается активность и данные исчезают
+
+    // Данный метод-событие вызывается при разрушении данной конфигурации
+    @Override
+    protected void onSaveInstanceState( @NonNull Bundle savingState ) {
+        // savingState - ~словарь сохраняющихся данных
+        super.onSaveInstanceState( savingState ) ;  // Оставить, нужно обязательно
+        Log.d( "CalcActivity", "onSaveInstanceState" ) ;
+        // добавляем к сохраняемым данным свои значения
+        savingState.putCharSequence( "history", tvHistory.getText() ) ;
+        savingState.putCharSequence( "result", tvResult.getText() ) ;
+    }
+    // Вызов при восстановлении конфигурации
+    @Override
+    protected void onRestoreInstanceState( @NonNull Bundle savedState ) {
+        super.onRestoreInstanceState( savedState ) ;
+        Log.d( "CalcActivity", "onRestoreInstanceState" ) ;
+
+        tvHistory.setText( savedState.getCharSequence( "history" ) ) ;
+        tvResult.setText( savedState.getCharSequence( "result" ) ) ;
+    }
+
     private void squareClick( View view ) {
         String result = tvResult.getText().toString() ;
         double arg ;
@@ -69,7 +96,7 @@ public class CalcActivity extends AppCompatActivity {
                 .show();                        // !! не забывать - запуск тоста
             return ;
         }
-        tvHistory.setText( result + "² =" ) ;
+        tvHistory.setText( getString( R.string.calc_square_history, result ) ) ;
         arg *= arg ;
         displayResult( arg ) ;
         needClear = true ;
@@ -87,7 +114,6 @@ public class CalcActivity extends AppCompatActivity {
     private void clearEditClick( View view ) {  // CE
         displayResult( "" ) ;
     }
-
     private void plusMinusClick( View view ) {
         // изменение знака: если есть "-" перед числом, то убираем его, если нет - добавляем
         String result = tvResult.getText().toString() ;
@@ -107,7 +133,6 @@ public class CalcActivity extends AppCompatActivity {
         result = result.substring( 0, result.length() - 1 ) ;
         displayResult( result ) ;
     }
-
     private void digitClick( View view ) {
         String result = tvResult.getText().toString() ;
         if( result.length() >= 10 ) {
@@ -122,14 +147,12 @@ public class CalcActivity extends AppCompatActivity {
         displayResult( result ) ;
 // Ø
     }
-
     private void displayResult( String result ) {
         if( "".equals( result ) || minusSign.equals( result ) ) {
             result = zeroSymbol ;
         }
         tvResult.setText( result ) ;
     }
-
     private void displayResult( double arg ) {
         long argInt = (long) arg ;
         String result = argInt == arg ? "" + argInt : "" + arg ;
