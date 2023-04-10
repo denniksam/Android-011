@@ -4,8 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.os.VibratorManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -53,9 +57,85 @@ public class CalcActivity extends AppCompatActivity {
         findViewById( R.id.calc_btn_clear ).setOnClickListener( this::clearClick ) ;
         findViewById( R.id.calc_btn_ce ).setOnClickListener( this::clearEditClick ) ;
         findViewById( R.id.calc_btn_square ).setOnClickListener( this::squareClick ) ;
+        findViewById( R.id.calc_btn_sqrt ).setOnClickListener( this::sqrtClick ) ;
 
     }
+    private void sqrtClick( View view ) {
+        String result = tvResult.getText().toString() ;
+        double arg ;
+        try {
+            arg = Double.parseDouble(
+                    result
+                            .replace( minusSign, "-" )
+                            .replaceAll( zeroSymbol, "0" )
+            ) ;
+        }
+        catch( NumberFormatException | NullPointerException ignored ) {
+            Toast.makeText(                     // Всплывающее сообщение
+                            this,                       // контекст - родительская активность
+                            R.string.calc_error_parse,  // текст либо ресурс
+                            Toast.LENGTH_SHORT )        // длительность (во времени)
+                    .show();                        // !! не забывать - запуск тоста
+            return ;
+        }
+        if( arg < 0 ) {
+            // Корень из отрицательного числа не извлекается (в действительных числах)
+            /* Доступ к системным устройствам на примере вибрации
+            Прежде всего, нужно получить разрешение на использование устройства.
+            Некоторые устройства не требуют подтверждение от пользователя, но все они
+            должны запросить разрешение от системы.
+            Заявка на доступ к устройствам (и другие разрешения) указываются в манифесте
+                <uses-permission android:name="android.permission.VIBRATE"/>
+            Дальнейшая работа с устройством может зависеть от версии API на которую рассчитано
+            приложение.
+             */
+            /* Самый простой подход - deprecated from O (Oreo, API 26)
+            Vibrator vibrator = (Vibrator) getSystemService( Context.VIBRATOR_SERVICE ) ;
+            vibrator.vibrate( 250 ) ;   // вибрация 250 мс
+            */
+            // начиная с S (API 31) изменились правила доступа к устройствам
+            Vibrator vibrator ;
+            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ) {
+                VibratorManager vibratorManager = (VibratorManager)
+                        getSystemService( Context.VIBRATOR_MANAGER_SERVICE ) ;
+                vibrator = vibratorManager.getDefaultVibrator() ;
+            }
+            else {
+                vibrator = (Vibrator) getSystemService( Context.VIBRATOR_SERVICE ) ;
+            }
 
+            // шаблон вибрации 1 - пауза, 2 - работа, 3 - пауза, 4 - работа, .....
+            long[] vibratePattern = { 0, 200, 100, 200 } ;
+
+            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ) {
+                // однократное включение
+                // vibrator.vibrate( VibrationEffect.createOneShot( 250, VibrationEffect.DEFAULT_AMPLITUDE ) ) ;
+
+                vibrator.vibrate(
+                        VibrationEffect.createWaveform(
+                                vibratePattern, -1   // индекс повтора, -1 - без повторов, один раз
+                        )
+                ) ;
+            }
+            else {
+                // vibrator.vibrate( 250 ) ;   // вибрация 250 мс - однократно
+                vibrator.vibrate( vibratePattern, -1 ) ;  // по шаблону
+            }
+/*
+            Получение вибратора:
+                        vibratorManager
+            API >= 31 <
+                        getSystemService
+
+            Использование:
+                        vibrator.vibrate( VibrationEffect.... )
+            API >= 26 <
+                        vibrator.vibrate()
+
+v.vibrate(new long[]{0, 500, 110, 500, 110, 450, 110, 200, 110, 170, 40, 450, 110, 200, 110, 170, 40, 500}, -1);
+ */
+        }
+    }
     // При изменении конфигурации устройства перезапускается активность и данные исчезают
 
     // Данный метод-событие вызывается при разрушении данной конфигурации
@@ -169,4 +249,5 @@ public class CalcActivity extends AppCompatActivity {
 - символ запятой задается ресурсами (подобрать симпатичный символ)
 - запятая в числе только одна
 - в общий лимит цифр числа (10 цифр) символы "-" и "," не включается
+
  */

@@ -40,7 +40,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TableLayout
+    <LinearLayout
+        android:orientation="vertical"
         android:id="@+id/tableLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -76,18 +77,24 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" >
-            <Button
+            <ImageButton
                 android:id="@+id/calc_btn_inverse"
                 style="@style/calc_btn_fn_style"
-                android:text="@string/calc_btn_inverse_text" />
-            <Button
+                android:src="@drawable/inv"
+                android:scaleType="fitCenter"
+                android:padding="25dp" />
+            <ImageButton
                 android:id="@+id/calc_btn_square"
                 style="@style/calc_btn_fn_style"
-                android:text="@string/calc_btn_square_text" />
-            <Button
+                android:src="@drawable/sqr"
+                android:scaleType="fitCenter"
+                android:padding="25dp"/>
+            <ImageButton
                 android:id="@+id/calc_btn_sqrt"
                 style="@style/calc_btn_fn_style"
-                android:text="@string/calc_btn_sqrt_text" />
+                android:src="@drawable/sqrt"
+                android:scaleType="fitCenter"
+                android:padding="25dp" />
             <Button
                 android:id="@+id/calc_btn_divide"
                 style="@style/calc_btn_fn_style"
@@ -178,6 +185,6 @@
                 android:text="@string/calc_btn_equal_text" />
         </TableRow>
 
-    </TableLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

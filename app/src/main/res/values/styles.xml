@@ -12,6 +12,7 @@
     <style name="calc_btn_fn_style" parent="calc_btn_base_style">
         <item name="android:background">@drawable/btn_fn_shape</item>
         <item name="android:textColor">@color/calc_fn_button_fg</item>
+        <item name="tint">@color/calc_fn_button_fg</item>
     </style>
     <style name="calc_btn_op_style" parent="calc_btn_base_style">
         <item name="android:background">@drawable/btn_op_shape</item>
