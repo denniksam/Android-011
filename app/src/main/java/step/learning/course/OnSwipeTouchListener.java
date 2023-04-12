@@ -1,6 +1,7 @@
 package step.learning.course;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -71,6 +72,7 @@ public class OnSwipeTouchListener implements View.OnTouchListener {
                     result = true ;
                 }
             }
+            // int width = Resources.getSystem().getDisplayMetrics().widthPixels;
             return result ;
         }
     }
