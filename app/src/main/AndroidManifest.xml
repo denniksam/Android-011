@@ -16,6 +16,7 @@
         <activity
             android:name=".GameActivity"
             android:exported="false"
+            android:screenOrientation="fullSensor"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".CalcActivity"

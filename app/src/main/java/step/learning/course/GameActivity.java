@@ -3,14 +3,22 @@ package step.learning.course;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,9 +29,11 @@ public class GameActivity extends AppCompatActivity {
     private final int[][] saves = new int[N][N] ;  // предыдущий ход
     private final TextView[][] tvCells = new TextView[N][N] ;   // ссылки на ячеки поля
     private final Random random = new Random() ;
+    private final String BEST_SCORE_FILENAME = "best_score.txt" ;
 
     private int score ;
     private int bestScore ;
+    private int saveScore ;
     private TextView tvScore ;
     private TextView tvBestScore ;
     private Animation spawnAnimation ;
@@ -62,7 +72,6 @@ public class GameActivity extends AppCompatActivity {
                         new OnSwipeTouchListener( GameActivity.this ) {
                             @Override
                             public void onSwipeRight() {
-                                //saveField() ;  // [0204] -> [0024] -> no move -> [undo]
                                 if( canMoveRight() ) {
                                     saveField() ;
                                     moveRight() ;
@@ -79,15 +88,24 @@ public class GameActivity extends AppCompatActivity {
                             }
                             @Override
                             public void onSwipeLeft() {
-                                Toast.makeText(
-                                                GameActivity.this,
-                                                "Left",
-                                                Toast.LENGTH_SHORT)
-                                        .show();
+                                if( canMoveLeft() ) {
+                                    saveField() ;
+                                    moveLeft() ;
+                                    spawnCell() ;
+                                    showField() ;
+                                }
+                                else {
+                                    Toast.makeText(
+                                                    GameActivity.this,
+                                                    "No Left Move",
+                                                    Toast.LENGTH_SHORT)
+                                            .show();
+                                }
                             }
                         }
                 ) ;
         findViewById( R.id.game_new ).setOnClickListener( this::newGame ) ;
+        findViewById( R.id.game_undo ).setOnClickListener( this::undoMoveClick ) ;
         newGame( null ) ;
     }
     private void newGame( View view ) {
@@ -97,16 +115,38 @@ public class GameActivity extends AppCompatActivity {
             }
         }
         score = 0 ;
+        loadBestScore() ;
+        tvBestScore.setText( getString( R.string.game_best_score, String.valueOf( bestScore ) ) ) ;
         spawnCell() ;
         spawnCell() ;
+        saveField() ;
         showField() ;
     }
     private boolean canMoveRight() {
+        for( int i = 0; i < N; i++ ) {
+            for( int j = 0; j < N-1; j++ ) {
+                if( cells[ i ][ j ] != 0 && cells[ i ][ j + 1 ] == 0
+                 || cells[ i ][ j ] != 0 && cells[ i ][ j ] == cells[ i ][ j + 1 ] ) {
+                    return true ;
+                }
+            }
+        }
         /*
         Д.З. Реализовать проверку возможности хода вправо (без изменения состояния поля)
         ** реализовать ходы и проверки по другим направлениям
          */
-        return true ;
+        return false ;
+    }
+    private boolean canMoveLeft() {
+        for( int i = 0; i < N; i++ ) {
+            for( int j = 0; j < N-1; j++ ) {
+                if( cells[ i ][ j ] == 0 && cells[ i ][ j + 1 ] != 0
+                        || cells[ i ][ j ] != 0 && cells[ i ][ j ] == cells[ i ][ j + 1 ] ) {
+                    return true ;
+                }
+            }
+        }
+        return false ;
     }
     @SuppressLint("DiscouragedApi")
     private void showField() {
@@ -136,6 +176,11 @@ public class GameActivity extends AppCompatActivity {
             }
         }
         tvScore.setText( getString( R.string.game_score, String.valueOf( score ) ) ) ;
+        if( score > bestScore ) {
+            bestScore = score ;
+            saveBestScore() ;
+            tvBestScore.setText( getString( R.string.game_best_score, String.valueOf( bestScore ) ) ) ;
+        }
     }
     private boolean spawnCell() {
         // собираем данные о пустых ячейках
@@ -161,9 +206,7 @@ public class GameActivity extends AppCompatActivity {
         tvCells[x][y].startAnimation( spawnAnimation ) ;
         return true ;
     }
-    private boolean moveRight() {
-        boolean isMoved = false ;    // [0002]->[0002], [0200]->[0002], [2020]->[0022]->[0004]
-
+    private void moveRight() {
         for( int i = 0; i < N; ++i ) {
             // сдвиги
             boolean wasReplace;
@@ -175,7 +218,6 @@ public class GameActivity extends AppCompatActivity {
                         cells[i][j] = cells[i][j - 1];
                         cells[i][j - 1] = 0;
                         wasReplace = true;
-                        isMoved = true;
                     }
                 }
             } while (wasReplace);
@@ -186,7 +228,6 @@ public class GameActivity extends AppCompatActivity {
                     score += cells[i][j] + cells[i][j - 1] ;   // счет = сумма всех объединенных ячеек
                     cells[i][j] *= -2 ;  // [2224]; "-" - признак для анимации
                     cells[i][j - 1] = 0 ;   // [2204]
-                    isMoved = true ;
                 }
             }  // [0404]  при коллапсе может понадобиться дополнительное смещение
             for (int j = N - 1; j > 0; --j) {
@@ -202,17 +243,51 @@ public class GameActivity extends AppCompatActivity {
                 }
             } // [0044]
         }
-        return isMoved ;
+    }
+
+    private void moveLeft() {
+        for( int i = 0; i < N; i++ ) {   // loop rows
+            int k = -1 ;  // stack head
+            // collapse
+            for( int j = 0; j < N; j++ ) {
+                if( cells[ i ][ j ] != 0 ) {
+                    if( k == -1 || cells[ i ][ j ] != cells[ i ][ k ] ) {
+                        k = j ;
+                    }
+                    else {
+                        cells[ i ][ k ] += cells[ i ][ j ] ;
+                        score += cells[ i ][ k ] ;
+                        cells[ i ][ j ] = 0 ;
+                        k = -1;
+                    }
+                }
+            }
+            // move
+            k = 0;
+            for( int j = 0; j < N; j++ ) {
+                if( cells[ i ][ j ] != 0 ) {
+                    cells[ i ][ k ] = cells[ i ][ j ] ;
+                    if( j != k ) cells[ i ][ j ] = 0 ;
+                    ++k;
+                }
+            }
+        }
     }
     private void saveField() {
         for (int i = 0; i < N; i++) {
             System.arraycopy(cells[i], 0, saves[i], 0, N);
         }
+        saveScore = score ;
     }
     private void undoMove() {
         for (int i = 0; i < N; i++) {
             System.arraycopy(saves[i], 0, cells[i], 0, N);
         }
+        score = saveScore ;
+    }
+    private void undoMoveClick( View view ) {
+        undoMove() ;
+        showField() ;
     }
     /*
     Д.З. Провести рефакторинг spawnCell()
@@ -220,9 +295,30 @@ public class GameActivity extends AppCompatActivity {
     * Реализовать один из ходов (в любую сторону)
      */
 
-    private class Coord {
-        private int x ;
-        private int y ;
+    private void saveBestScore() {
+        try(  FileOutputStream fileStream = openFileOutput( BEST_SCORE_FILENAME, Context.MODE_PRIVATE ) ;
+              DataOutputStream writer = new DataOutputStream( fileStream ) ) {
+            writer.writeInt( bestScore ) ;
+            writer.flush() ;
+        }
+        catch( IOException ex ) {
+            Log.d( "saveBestScore", ex.getMessage() ) ;
+        }
+    }
+    private void loadBestScore() {
+        try( FileInputStream fileInputStream = openFileInput( BEST_SCORE_FILENAME );
+             DataInputStream reader = new DataInputStream( fileInputStream ) ) {
+            bestScore = reader.readInt() ;
+        }
+        catch( IOException ex ) {
+            Log.d( "loadBestScore", ex.getMessage() ) ;
+            bestScore = 0 ;
+        }
+    }
+
+    private static class Coord {
+        private final int x ;
+        private final int y ;
 
         public Coord(int x, int y) {
             this.x = x;
