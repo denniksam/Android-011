@@ -3,7 +3,9 @@ package step.learning.course;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,6 +36,7 @@ public class GameActivity extends AppCompatActivity {
     private int score ;
     private int bestScore ;
     private int saveScore ;
+    private boolean continuePlaying ;
     private TextView tvScore ;
     private TextView tvBestScore ;
     private Animation spawnAnimation ;
@@ -114,6 +117,7 @@ public class GameActivity extends AppCompatActivity {
                 cells[i][j] = 0 ;
             }
         }
+        continuePlaying = false ;
         score = 0 ;
         loadBestScore() ;
         tvBestScore.setText( getString( R.string.game_best_score, String.valueOf( bestScore ) ) ) ;
@@ -180,6 +184,9 @@ public class GameActivity extends AppCompatActivity {
             bestScore = score ;
             saveBestScore() ;
             tvBestScore.setText( getString( R.string.game_best_score, String.valueOf( bestScore ) ) ) ;
+        }
+        if( score >= 8 && ! continuePlaying ) {  // !!
+            showWinMessage() ;
         }
     }
     private boolean spawnCell() {
@@ -314,6 +321,17 @@ public class GameActivity extends AppCompatActivity {
             Log.d( "loadBestScore", ex.getMessage() ) ;
             bestScore = 0 ;
         }
+    }
+    private void showWinMessage() {
+        new AlertDialog.Builder( this, com.google.android.material.R.style.Base_Theme_Material3_Dark_Dialog ) // com.google.android.material.R.style.Base_Theme_Material3_Dark )
+                .setTitle( R.string.game_win_dialog_title )
+                .setMessage( R.string.game_win_dialog_message )
+                .setIcon( android.R.drawable.btn_star )
+                .setCancelable( false )
+                .setPositiveButton( R.string.game_yes_dialog_button, ( dialog, button ) -> continuePlaying = true )
+                .setNegativeButton( R.string.game_exit_dialog_button,  ( dialog, button ) -> finish() )
+                .setNeutralButton( R.string.game_new_dialog_button, ( dialog, button ) -> newGame( null ) )
+                .show() ;
     }
 
     private static class Coord {
