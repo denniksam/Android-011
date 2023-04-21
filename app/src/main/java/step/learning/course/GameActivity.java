@@ -222,10 +222,10 @@ public class GameActivity extends AppCompatActivity {
                 for (int j = N - 1; j > 0; --j) {
                     if (cells[i][j] == 0          // текущая ячейка 0
                             && cells[i][j - 1] != 0) {    // а перед ней - не 0
-                        cells[i][j] = cells[i][j - 1];
-                        cells[i][j - 1] = 0;
-                        wasReplace = true;
-                    }
+                        cells[i][j] = cells[i][j - 1];    // [2    4     2     0]
+                        cells[i][j - 1] = 0;              //             j-1   j
+                        wasReplace = true;                // [2    4     0     2]
+                    }                                     //       j-1   j
                 }
             } while (wasReplace);
 
