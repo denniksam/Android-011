@@ -54,4 +54,7 @@
     <string name="calc_btn_9_text">9</string>
     <string name="calc_minus_sign">\u2212</string>
 
+    <!-- Chat activity -->
+    <string name="chat_channel_name">Chat notification channel</string>
+    <string name="chat_channel_description">Android-011 App. Chat notification channel</string>
 </resources>
